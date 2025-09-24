@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Sistem Administrasi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <img src="img/logo ditjenim.png" alt="Logo" width="100">
+      <h2>Login</h2>
+      <input type="text" id="username" placeholder="Email">
+      <input type="password" id="password" placeholder="Password">
+      <button id="btnLogin">Login</button>
+    </div>
+  </div>
+
+  <script>
+    // data login hardcode
+    const users = [
+      { email: "TU@gmail.com", password: "123" },
+      { email: "TIKKIM@gmail.com", password: "123" }
+    ];
+
+    document.getElementById("btnLogin").addEventListener("click", () => {
+      const email = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!email || !password) {
+        alert("⚠️ Isi email dan password!");
+        return;
+      }
+
+      const user = users.find(u => u.email === email && u.password === password);
+
+      if (user) {
+        alert("✅ Login berhasil");
+        localStorage.setItem("userEmail", email);
+        window.location.href = "surat-keluar.html"; // pindah halaman setelah login
+      } else {
+        alert("❌ Login gagal: email/password salah");
+      }
+    });
+  </script>
+</body>
+</html>

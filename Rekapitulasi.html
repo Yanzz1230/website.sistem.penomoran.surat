@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rekapitulasi Surat - SIMERTUA</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .modal {display:none; position:fixed; z-index:999; left:0; top:0; width:100%; height:100%; background-color: rgba(0,0,0,0.5);}
+    .modal-content {background:#fff; margin:5% auto; padding:20px; border-radius:8px; width:400px;}
+    .modal-header h2 {margin:0 0 15px;}
+    .close {float:right; font-size:20px; cursor:pointer;}
+    .form-group {margin-bottom:10px;}
+    .form-group label {display:block; font-weight:bold; margin-bottom:5px;}
+    .form-group input {width:100%; padding:6px; border-radius:5px; border:1px solid #ccc;}
+  </style>
+</head>
+<body>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-left">
+    <img src="img/logo ditjenim.png" alt="Logo Imigrasi"/>
+    <span>SIMERTUA</span>
+  </div>
+  <ul class="nav-right">
+    <li><a href="surat-keluar.html">Surat</a></li>
+    <li><a href="rekapitulasi.html" class="active">Rekapitulasi</a></li>
+    <li><a href="login.html">Logout</a></li>
+  </ul>
+</nav>
+
+<!-- HEADER -->
+<header>
+  <h1>Rekapitulasi Surat</h1>
+  <p>Kantor Imigrasi Kelas I TPI Tanjungpinang</p>
+</header>
+
+<main>
+  <section class="rekap-section">
+    <h2>Total Surat</h2>
+    <div class="rekap-box">
+      <div class="card total">
+        <h3 style="color: white;">📝 Total Surat</h3>
+        <h2 id="rekapTotal" style="color: white;">0</h2>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="filter-box">
+      <label for="filterTanggal">Tanggal:</label>
+      <input type="date" id="filterTanggal">
+      <button class="btn" onclick="filterData()">Cari</button>
+      <button class="btn" onclick="resetFilter()">Reset</button>
+      <button class="btn" onclick="exportExcel()">Export Excel</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Daftar Surat</h2>
+    <table id="tabelRekap">
+      <thead>
+        <tr>
+          <th>Jenis</th>
+          <th>Nomor Surat</th>
+          <th>Perihal</th>
+          <th>Tanggal</th>
+          <th>Admin</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody><tr><td colspan="6" style="text-align:center;">Memuat data...</td></tr></tbody>
+    </table>
+  </section>
+</main>
+
+<footer>
+  <p>© 2025 Kantor Imigrasi Kelas I TPI Tanjungpinang</p>
+</footer>
+
+<div id="modalEdit" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="tutupModal()">&times;</span>
+    <div class="modal-header"><h2>Edit Surat</h2></div>
+    <form id="formEdit">
+      <input type="hidden" id="editId">
+      <div class="form-group">
+        <label>Nomor Surat:</label>
+        <input type="text" id="editNomor" required>
+      </div>
+      <div class="form-group">
+        <label>Perihal:</label>
+        <input type="text" id="editPerihal" required>
+      </div>
+      <div class="form-group">
+        <label>Tanggal:</label>
+        <input type="date" id="editTanggal" required>
+      </div>
+      <div class="form-group">
+        <label>Nama Admin:</label>
+        <input type="text" id="editAdmin" required>
+      </div>
+      <button type="submit" class="btn">Simpan Perubahan</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const rekapTotal = document.getElementById("rekapTotal");
+const tabel = document.querySelector("#tabelRekap tbody");
+let dataSurat = JSON.parse(localStorage.getItem("dataSurat") || "[]");
+
+function escapeHtml(str) { return str ? String(str).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])) : ""; }
+function formatTanggal(val) { if(!val) return ""; if(/^\d{4}-\d{2}-\d{2}$/.test(val)){ const [y,m,d]=val.split("-"); return `${d}-${m}-${y}`;} return val; }
+function normalizeDateForInput(val){if(!val) return ""; if(/^\d{2}-\d{2}-\d{4}$/.test(val)){const [d,m,y]=val.split("-"); return `${y}-${m}-${d}`;} return val;}
+
+function tampilkanTabel(data){
+  tabel.innerHTML = "";
+  if(data.length>0){
+    data.forEach((row,index)=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${escapeHtml(row.jenisSurat)}</td>
+        <td>${escapeHtml(row.nomorSurat)}</td>
+        <td>${escapeHtml(row.perihal)}</td>
+        <td>${escapeHtml(formatTanggal(row.tanggalSurat))}</td>
+        <td>${escapeHtml(row.namaAdmin)}</td>
+        <td><button class="btn btn-edit" onclick="bukaModal(${index})">Edit</button>
+            <button class="btn btn-hapus" onclick="hapusData(${index})">Hapus</button></td>`;
+      tabel.appendChild(tr);
+    });
+  } else {
+    tabel.innerHTML=`<tr><td colspan="6" style="text-align:center;">Tidak ada data surat</td></tr>`;
+  }
+  rekapTotal.textContent = data.length;
+}
+
+function muatRekap(){ dataSurat = JSON.parse(localStorage.getItem("dataSurat") || "[]"); tampilkanTabel(dataSurat);}
+function filterData(){ const tgl=document.getElementById("filterTanggal").value; if(!tgl){tampilkanTabel(dataSurat); return;} const filtered=dataSurat.filter(d=>d.tanggalSurat===tgl); tampilkanTabel(filtered);}
+function resetFilter(){ document.getElementById("filterTanggal").value=""; tampilkanTabel(dataSurat);}
+
+function bukaModal(index){
+  const row=dataSurat[index];
+  document.getElementById("editId").value=index;
+  document.getElementById("editNomor").value=row.nomorSurat;
+  document.getElementById("editPerihal").value=row.perihal;
+  document.getElementById("editTanggal").value=normalizeDateForInput(row.tanggalSurat);
+  document.getElementById("editAdmin").value=row.namaAdmin;
+  document.getElementById("modalEdit").style.display="block";
+}
+function tutupModal(){ document.getElementById("modalEdit").style.display="none"; }
+
+document.getElementById("formEdit").addEventListener("submit",function(e){
+  e.preventDefault();
+  const index=document.getElementById("editId").value;
+  dataSurat[index]={...dataSurat[index],
+    nomorSurat: document.getElementById("editNomor").value,
+    perihal: document.getElementById("editPerihal").value,
+    tanggalSurat: document.getElementById("editTanggal").value,
+    namaAdmin: document.getElementById("editAdmin").value
+  };
+  localStorage.setItem("dataSurat",JSON.stringify(dataSurat));
+  tutupModal();
+  muatRekap();
+});
+
+function hapusData(index){ if(!confirm(`Apakah yakin mau menghapus surat: ${dataSurat[index].nomorSurat}?`)) return; dataSurat.splice(index,1); localStorage.setItem("dataSurat",JSON.stringify(dataSurat)); muatRekap();}
+
+
+function exportExcel() {
+  if (dataSurat.length === 0) {
+    return alert("Tidak ada data untuk diexport.");
+  }
+
+  // Pakai titik koma biar Excel Indonesia otomatis pisah kolom
+  let csv = "Jenis;Nomor Surat;Perihal;Tanggal;Admin\n";
+  dataSurat.forEach(d => {
+    csv += `${d.jenisSurat};${d.nomorSurat};${d.perihal};${d.tanggalSurat};${d.namaAdmin}\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "rekap_surat.csv"; // bisa dibuka langsung di Excel
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+
+window.addEventListener("load", muatRekap);
+</script>
+</body>
+</html>

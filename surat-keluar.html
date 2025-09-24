@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistem Administrasi Penomoran Surat</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="nav-left">
+    <img src="img/logo ditjenim.png" alt="Logo Imigrasi"/>
+    <span>SIMERTUA</span>
+  </div>
+  <ul class="nav-right">
+    <li><a href="surat-keluar.html" class="active">Surat</a></li>
+    <li><a href="rekapitulasi.html">Rekapitulasi</a></li>
+    <li><a href="login.html">Logout</a></li>
+  </ul>
+</nav>
+
+<!-- HEADER -->
+<header>
+  <img src="img/logo ditjenim.png" alt="Logo Imigrasi"/>
+  <h1>Sistem Manajemen Registrasi Tata Persuratan</h1>
+  <h2>SIMERTUA</h2>
+  <p>Kantor Imigrasi Kelas I TPI Tanjungpinang</p>
+</header>
+
+<main>
+  <!-- FORM INPUT -->
+  <section class="form-section">
+    <h2>Form Input Surat</h2>
+    <form id="formSurat">
+      <label for="jenisSurat">Jenis Surat:</label>
+      <input type="text" id="jenisSurat" name="jenisSurat" value="Keluar" readonly />
+
+      <label for="nomorSurat">Nomor Surat:</label>
+      <input type="text" id="nomorSurat" name="nomorSurat" readonly required/>
+
+      <label for="perihal">Perihal:</label>
+      <input type="text" id="perihal" name="perihal" placeholder="Isi perihal surat" required/>
+
+      <label for="tanggalSurat">Tanggal Surat:</label>
+      <input type="date" id="tanggalSurat" name="tanggalSurat" required/>
+
+      <label for="namaAdmin">Nama Admin:</label>
+      <input type="text" id="namaAdmin" name="namaAdmin" placeholder="Masukkan nama" required/>
+
+      <button type="submit">Simpan</button>
+    </form>
+    <div id="hasil" class="status-msg"></div>
+  </section>
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 Kantor Imigrasi Kelas I TPI Tanjungpinang</p>
+</footer>
+
+<script>
+const form = document.getElementById("formSurat");
+const hasil = document.getElementById("hasil");
+const nomorSuratInput = document.getElementById("nomorSurat");
+
+// Escape HTML
+function escapeHtml(str) {
+  if (!str) return "";
+  return String(str).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+}
+
+// Load last nomor surat
+function loadNomorSurat() {
+  const data = JSON.parse(localStorage.getItem("dataSurat") || "[]");
+  if (data.length === 0) {
+    nomorSuratInput.value = 1;
+  } else {
+    let last = parseInt(data[data.length - 1].nomorSurat);
+    nomorSuratInput.value = isNaN(last) ? 1 : last + 1;
+  }
+}
+
+// Simpan data
+form.addEventListener("submit", function(e) {
+  e.preventDefault();
+  const data = JSON.parse(localStorage.getItem("dataSurat") || "[]");
+
+  const suratBaru = {
+    id: Date.now(),
+    jenisSurat: escapeHtml(document.getElementById("jenisSurat").value),
+    nomorSurat: escapeHtml(document.getElementById("nomorSurat").value),
+    perihal: escapeHtml(document.getElementById("perihal").value),
+    tanggalSurat: document.getElementById("tanggalSurat").value,
+    namaAdmin: escapeHtml(document.getElementById("namaAdmin").value)
+  };
+
+  data.push(suratBaru);
+  localStorage.setItem("dataSurat", JSON.stringify(data));
+  hasil.textContent = "✅ Data surat berhasil disimpan.";
+  form.reset();
+  document.getElementById("jenisSurat").value = "Keluar";
+  loadNomorSurat();
+});
+
+// Init
+window.addEventListener("load", loadNomorSurat);
+</script>
+</body>
+</html>
